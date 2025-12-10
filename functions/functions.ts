@@ -5,7 +5,7 @@ let timer: number = 0;
 
 // Start Time Tracking
 export function startTimer(): void {
-  timer === 0 && (timer = Date.now());
+  timer === 0 && (timer = performance.now());
 }
 
 // Reset Timer
@@ -19,7 +19,9 @@ export function addLog<T>(value: T, iName: string): T {
   const output = {
     [iName]: {
       value: value,
-      Duration: timer ? Date.now() - timer : "Timer was not Started",
+      Duration: timer
+        ? (performance.now() - timer).toPrecision(4) + "ms"
+        : "Timer was not Started",
     },
   };
 
@@ -29,12 +31,11 @@ export function addLog<T>(value: T, iName: string): T {
 
     // Active Section
   } else if (isSection) {
-    const keptItems = logs.slice(0, logs.length - 1); // Items Before The Active Section
-    const sectionItem = logs.slice(-1)[0]; // Active Setion Object
+    const sectionItem = logs.pop() ?? []; // Active Setion Object
     const sectionName = Object.keys(sectionItem)[0];
     const sectionValues = Object.values(sectionItem).flat(); // Previous Logs In Active Section
     sectionValues.push(output); // Push The Log To Previous Logs
-    logs = [...keptItems, { [sectionName]: sectionValues }];
+    logs.push({ [sectionName]: sectionValues });
   }
   return value;
 }
