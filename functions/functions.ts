@@ -1,5 +1,6 @@
 // Constants
-let logs: Record<string, unknown>[] = [];
+type Logs = Record<string, unknown>[];
+const logs: Logs = [];
 let isSection = false;
 let timer: number = 0;
 
@@ -31,11 +32,10 @@ export function addLog<T>(value: T, iName: string): T {
 
     // Active Section
   } else if (isSection) {
-    const sectionItem = logs.pop() ?? []; // Active Setion Object
+    const sectionItem = logs[logs.length - 1]; // Active Setion Object
     const sectionName = Object.keys(sectionItem)[0];
-    const sectionValues = Object.values(sectionItem).flat(); // Previous Logs In Active Section
+    const sectionValues = sectionItem[sectionName] as Logs; // Previous Logs In Active Section
     sectionValues.push(output); // Push The Log To Previous Logs
-    logs.push({ [sectionName]: sectionValues });
   }
   return value;
 }
