@@ -1,6 +1,6 @@
 type Logs = Record<string, unknown>[];
 
-export class LoggerClass {
+export class Logger {
   logs: Logs = [];
   isSection: boolean = false;
   timer: number = 0;
@@ -15,10 +15,10 @@ export class LoggerClass {
     this.timer = 0;
   }
   // Add a Log
-  addLog<T>(value: T, iName: string): T {
+  addLog<T>(value: T, label: string): T {
     // Log Object
     const output = {
-      [iName]: {
+      [label]: {
         value: value,
         Duration: this.timer
           ? (performance.now() - this.timer).toPrecision(4) + "ms"

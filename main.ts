@@ -1,1 +1,1 @@
-export { LoggerClass } from "./classes/main.ts";
+export { Logger } from "./classes/main.ts";
