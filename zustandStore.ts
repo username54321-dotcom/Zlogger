@@ -18,6 +18,6 @@ const store = createStore<logStore>((set) => ({
   },
 }));
 
-export const getLogs = () => store.getState().logs;
-export const addLog = (name: string, value: unknown) =>
+export const getLogs = (): unknown => store.getState().logs;
+export const addLog = (name: string, value: unknown): unknown =>
   store.getState().addlog(name, value);
