@@ -1,3 +1,1 @@
-import { LoggerClass } from "./classes/main.ts";
-
-export const Logger = LoggerClass;
+export { LoggerClass } from "./classes/main.ts";
