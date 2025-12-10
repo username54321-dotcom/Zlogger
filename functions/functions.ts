@@ -57,6 +57,6 @@ export function table() {
 }
 
 // Get Log
-export function getLogs() {
+export function getLogs(): typeof logs {
   return logs;
 }
