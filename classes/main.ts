@@ -21,7 +21,7 @@ export class Logger {
       [label]: {
         value: value,
         Duration: this.timer
-          ? (performance.now() - this.timer).toPrecision(4) + "ms"
+          ? (performance.now() - this.timer).toPrecision(4) + " ms"
           : "Timer was not Started",
       },
     };
