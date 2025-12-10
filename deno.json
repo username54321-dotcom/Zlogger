@@ -1,7 +1,7 @@
 {
   "name": "@qamareg/logger",
   "version": "1.0.0",
-  "exports": "./mod.ts",
+  "exports": "./main.ts",
 
   "tasks": {
     "dev": "deno run --watch main.ts"
