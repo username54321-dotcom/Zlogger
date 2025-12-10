@@ -3,8 +3,7 @@
   "specifiers": {
     "jsr:@std/assert@1": "1.0.16",
     "jsr:@std/internal@^1.0.12": "1.0.12",
-    "npm:atomic-sleep@1": "1.0.0",
-    "npm:zustand@^5.0.9": "5.0.9"
+    "npm:atomic-sleep@1": "1.0.0"
   },
   "jsr": {
     "@std/assert@1.0.16": {
@@ -20,16 +19,12 @@
   "npm": {
     "atomic-sleep@1.0.0": {
       "integrity": "sha512-kNOjDqAh7px0XWNI+4QbzoiR/nTkHAWNud2uvnJquD1/x5a7EQZMJT0AczqK0Qn67oY/TTQ1LbUKajZpp3I9tQ=="
-    },
-    "zustand@5.0.9": {
-      "integrity": "sha512-ALBtUj0AfjJt3uNRQoL1tL2tMvj6Gp/6e39dnfT6uzpelGru8v1tPOGBzayOWbPJvujM8JojDk3E1LxeFisBNg=="
     }
   },
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@1",
-      "npm:atomic-sleep@1",
-      "npm:zustand@^5.0.9"
+      "npm:atomic-sleep@1"
     ]
   }
 }
