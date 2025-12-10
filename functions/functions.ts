@@ -8,6 +8,11 @@ export function startTimer(): void {
   timer === 0 && (timer = Date.now());
 }
 
+// Reset Timer
+export function resetTimer() {
+  timer = 0;
+}
+
 // Add a Log
 export function addLog<T>(value: T, iName: string): T {
   // Log Object
