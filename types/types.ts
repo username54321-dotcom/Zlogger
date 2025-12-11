@@ -24,3 +24,13 @@ export type GetTimers = {
 };
 
 export type GetLogs = { json: Logs; stringify: string };
+
+export type Sections<SectionNames extends string> =
+  | Record<SectionNames, Logs[]>
+  | Record<PropertyKey, []>;
+
+export type GetSections<SectionNames extends string> = {
+  log: () => void;
+  json: () => Sections<SectionNames> | Logs[];
+  stringify: () => string;
+};

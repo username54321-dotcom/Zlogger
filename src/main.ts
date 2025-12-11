@@ -5,6 +5,8 @@ import type {
   OnError,
   GetTimers,
   GetLogs,
+  Sections,
+  GetSections,
 } from "../types/types.ts";
 
 interface ClassProps<TimerNames, SectionNames> {
@@ -18,7 +20,7 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
   timers: TimerStack = {};
   timerNames: string[];
   sectionNames: SectionNames[];
-  sections: Record<SectionNames, Logs[]> | Record<PropertyKey, []>;
+  sections: Sections<SectionNames>;
   stack: Stack = { timers: this.timers, logs: this.logs };
 
   constructor({
@@ -32,6 +34,7 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
     );
   }
 
+  // Add Log To Section
   toSection<T>(value: T, label: string, sectionName: SectionNames) {
     this.addLog(value, label);
     const output = {
@@ -44,6 +47,24 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
     targetSection.push(output);
 
     return value;
+  }
+
+  // Get Sections
+  getSections(sectionName?: SectionNames): GetSections<SectionNames> {
+    if (sectionName) {
+      const targetSection = this.sections[sectionName];
+      return {
+        log: () => console.log(targetSection),
+        json: () => targetSection,
+        stringify: () => JSON.stringify(targetSection),
+      };
+    } else {
+      return {
+        log: () => console.log(this.sections),
+        json: () => this.sections,
+        stringify: () => JSON.stringify(this.sections),
+      };
+    }
   }
   // Start Timer
   startTimer(timerName: TimerNames) {
@@ -91,32 +112,25 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
     };
 
     // No Active Section -- Just Append
-    if (!this.isSection) {
-      this.logs.push(output);
 
-      // Active Section
-    } else if (this.isSection) {
-      const sectionItem = this.logs[this.logs.length - 1]; // Active Setion Object
-      const sectionName = Object.keys(sectionItem)[0];
-      const sectionValues = sectionItem[sectionName] as Logs; // Previous Logs In Active Section
-      sectionValues.push(output); // Push The Log To Previous Logs
-    }
+    this.logs.push(output);
+
     return value;
   }
 
   // Start a New Section
-  addSection(sectionName: string) {
-    const newSection = { [sectionName]: [] };
-    this.logs.push(newSection);
-    this.isSection = true;
-    return this;
-  }
+  // addSection(sectionName: string) {
+  //   const newSection = { [sectionName]: [] };
+  //   this.logs.push(newSection);
+  //   this.isSection = true;
+  //   return this;
+  // }
 
   // End The Active Section
-  endSection() {
-    this.isSection = false;
-    return this;
-  }
+  // endSection() {
+  //   this.isSection = false;
+  //   return this;
+  // }
 
   // Console Logging The Logs
   log() {
