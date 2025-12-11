@@ -1,4 +1,10 @@
-import type { Logs, TimerStack } from "../types/types.ts";
+import type {
+  Logs,
+  TimerContents,
+  TimerStack,
+  Stack,
+  OnError,
+} from "../types/types.ts";
 
 interface ClassProps<TypeTimerNames> {
   TimerNames?: TypeTimerNames[];
@@ -10,6 +16,7 @@ export class Logger<TypeTimerNames extends string> {
   timestamp: number = performance.now();
   timers: TimerStack = {};
   timerNames: string[];
+  stack: Stack = { timers: this.timers, logs: this.logs };
 
   constructor({ TimerNames }: ClassProps<TypeTimerNames> = {}) {
     this.timerNames = TimerNames ?? [];
@@ -98,12 +105,29 @@ export class Logger<TypeTimerNames extends string> {
     return this.logs;
   }
   // Get Timers
-  getTimers(timerName?: string) {
+  getTimers(timerName?: string): typeof this.timers | TimerContents {
     if (!timerName) {
       return this.timers;
     } else {
       const timerObj = Object.values(this.timers[timerName])[0];
       return timerObj;
     }
+  }
+
+  // Get Stack and Logs
+  getStack(): Stack {
+    return this.stack;
+  }
+  // Callback on Unhandled Exception
+  onError(callbackFn: ({ stack, syncError, asyncError }: OnError) => void) {
+    // Sync Errors Hnadling
+    addEventListener("error", (error) =>
+      callbackFn({ stack: this.stack, syncError: error })
+    );
+
+    // Async Errors Handling
+    addEventListener("unhandledrejection", (error) =>
+      callbackFn({ stack: this.stack, asyncError: error })
+    );
   }
 }

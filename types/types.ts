@@ -7,3 +7,13 @@ export type TimerContents = {
 };
 export type TimerObj = Record<string, TimerContents>;
 export type TimerStack = Record<string, TimerObj>;
+export interface Stack {
+  timers: TimerStack;
+  logs: Logs;
+}
+
+export interface OnError {
+  stack?: Stack;
+  syncError?: ErrorEvent;
+  asyncError?: PromiseRejectionEvent;
+}
