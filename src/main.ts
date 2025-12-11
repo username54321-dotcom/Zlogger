@@ -1,42 +1,66 @@
 import type {
   Logs,
-  TimerContents,
   TimerStack,
   Stack,
   OnError,
+  GetTimers,
+  GetLogs,
 } from "../types/types.ts";
 
-interface ClassProps<TypeTimerNames> {
-  TimerNames?: TypeTimerNames[];
+interface ClassProps<TimerNames, SectionNames> {
+  timerNames?: TimerNames[];
+  sectionNames?: SectionNames[];
 }
 
-export class Logger<TypeTimerNames extends string> {
+export class Logger<TimerNames extends string, SectionNames extends string> {
   logs: Logs = [];
   isSection: boolean = false;
-  timestamp: number = performance.now();
   timers: TimerStack = {};
   timerNames: string[];
+  sectionNames: SectionNames[];
+  sections: Record<SectionNames, Logs[]> | Record<PropertyKey, []>;
   stack: Stack = { timers: this.timers, logs: this.logs };
 
-  constructor({ TimerNames }: ClassProps<TypeTimerNames> = {}) {
-    this.timerNames = TimerNames ?? [];
+  constructor({
+    timerNames,
+    sectionNames,
+  }: ClassProps<TimerNames, SectionNames> = {}) {
+    this.timerNames = timerNames ?? [];
+    this.sectionNames = sectionNames ?? [];
+    this.sections = Object.fromEntries(
+      sectionNames?.map((item) => [item, []]) ?? []
+    );
   }
 
+  toSection<T>(value: T, label: string, sectionName: SectionNames) {
+    this.addLog(value, label);
+    const output = {
+      [`[ ${label} ]`]: {
+        value: value,
+        TimeStamp: performance.now(),
+      },
+    };
+    const targetSection = this.sections[sectionName] as Logs;
+    targetSection.push(output);
+
+    return value;
+  }
   // Start Timer
-  startTimer(timerName: TypeTimerNames) {
+  startTimer(timerName: TimerNames) {
     Object.defineProperty(this.timers, timerName, {
       value: {
         [timerName]: {
           "Start Timestamp": performance.now(),
           "End Timestamp": "Timer was not Stopped",
-          Duration: "N/A",
+          Duration: null,
         },
       },
     });
+    return this;
   }
 
   // End Timer
-  endTimer(timerName: TypeTimerNames) {
+  endTimer(timerName: TimerNames) {
     const cTimestamp = performance.now();
     const timerObj = Object.values(this.timers[timerName])[0];
     Object.defineProperties(timerObj, {
@@ -51,16 +75,18 @@ export class Logger<TypeTimerNames extends string> {
   }
 
   // Reset Timer
+
   // resetTimer() {
   //   this.timer = 0;
   // }
+
   // Add a Log
   addLog<T>(value: T, label: string): T {
     // Log Object
     const output = {
       [`[ ${label} ]`]: {
         value: value,
-        TimeStamp: this.timestamp,
+        TimeStamp: performance.now(),
       },
     };
 
@@ -83,34 +109,48 @@ export class Logger<TypeTimerNames extends string> {
     const newSection = { [sectionName]: [] };
     this.logs.push(newSection);
     this.isSection = true;
+    return this;
   }
 
   // End The Active Section
   endSection() {
     this.isSection = false;
+    return this;
   }
 
   // Console Logging The Logs
   log() {
     console.log(this.logs);
+    return this;
   }
 
   // Console.Table
   table() {
     console.table(this.logs);
+    return this;
   }
 
   // Get Log
-  getLogs(): typeof this.logs {
-    return this.logs;
+  getLogs(): GetLogs {
+    const output = {
+      json: this.logs,
+      stringify: JSON.stringify(this.logs),
+    };
+    return output;
   }
   // Get Timers
-  getTimers(timerName?: string): typeof this.timers | TimerContents {
+  getTimers(timerName?: TimerNames): GetTimers {
     if (!timerName) {
-      return this.timers;
+      return {
+        json: this.timers,
+        stringify: JSON.stringify(this.timers),
+      };
     } else {
       const timerObj = Object.values(this.timers[timerName])[0];
-      return timerObj;
+      return {
+        json: timerObj,
+        stringify: JSON.stringify(timerObj),
+      };
     }
   }
 
