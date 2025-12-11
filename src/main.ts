@@ -35,7 +35,7 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
   }
 
   // Add Log To Section
-  toSection<T>(value: T, label: string, sectionName: SectionNames) {
+  toSection<T>(value: T, label: string, sectionName: SectionNames): T {
     this.addLog(value, label);
     const output = {
       [`[ ${label} ]`]: {
@@ -54,20 +54,20 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
     if (sectionName) {
       const targetSection = this.sections[sectionName];
       return {
-        log: () => console.log(targetSection),
+        log: (): void => console.log(targetSection),
         json: () => targetSection,
         stringify: () => JSON.stringify(targetSection),
       };
     } else {
       return {
-        log: () => console.log(this.sections),
+        log: (): void => console.log(this.sections),
         json: () => this.sections,
         stringify: () => JSON.stringify(this.sections),
       };
     }
   }
   // Start Timer
-  startTimer(timerName: TimerNames) {
+  startTimer(timerName: TimerNames): this {
     Object.defineProperty(this.timers, timerName, {
       value: {
         [timerName]: {
@@ -133,13 +133,13 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
   // }
 
   // Console Logging The Logs
-  log() {
+  log(): this {
     console.log(this.logs);
     return this;
   }
 
   // Console.Table
-  table() {
+  table(): this {
     console.table(this.logs);
     return this;
   }
