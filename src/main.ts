@@ -84,15 +84,16 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
   endTimer(timerName: TimerNames) {
     const cTimestamp = performance.now();
     const timerObj = Object.values(this.timers[timerName])[0];
-    Object.defineProperties(timerObj, {
-      "End Timestamp": {
-        value: cTimestamp,
-      },
-      Duration: {
-        value: +(cTimestamp - timerObj["Start Timestamp"]).toPrecision(3),
-      },
-    });
-    console.log(timerObj);
+    timerObj["End Timestamp"] = cTimestamp;
+    timerObj.Duration = +cTimestamp - timerObj["Start Timestamp"];
+    // Object.defineProperties(timerObj, {
+    //   "End Timestamp": {
+    //     value: cTimestamp,
+    //   },
+    //   Duration: {
+    //     value: +(cTimestamp - timerObj["Start Timestamp"]).toPrecision(3),
+    //   },
+    // });
   }
 
   // Reset Timer

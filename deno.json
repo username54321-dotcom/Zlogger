@@ -1,6 +1,6 @@
 {
   "name": "@qamareg/logger",
-  "version": "1.4.1",
+  "version": "1.4.11",
   "exports": "./mod.ts",
 
   "tasks": {
