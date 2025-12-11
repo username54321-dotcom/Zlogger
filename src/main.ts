@@ -1,21 +1,22 @@
-type Logs = Record<string, unknown>[];
+import type { Logs, TimerStack } from "../types/types.ts";
 
-type TimerContents = {
-  "Start Timestamp": number;
-  "End Timestamp": string | number;
-  Duration: number | null;
-};
-type TimerObj = Record<string, TimerContents>;
-type TimerStack = Record<string, TimerObj>;
+interface ClassProps<TypeTimerNames> {
+  TimerNames?: TypeTimerNames[];
+}
 
-export class Logger {
+export class Logger<TypeTimerNames extends string> {
   logs: Logs = [];
   isSection: boolean = false;
   timestamp: number = performance.now();
   timers: TimerStack = {};
+  timerNames: string[];
+
+  constructor({ TimerNames }: ClassProps<TypeTimerNames> = {}) {
+    this.timerNames = TimerNames ?? [];
+  }
 
   // Start Timer
-  startTimer(timerName: string) {
+  startTimer(timerName: TypeTimerNames) {
     Object.defineProperty(this.timers, timerName, {
       value: {
         [timerName]: {
@@ -28,7 +29,7 @@ export class Logger {
   }
 
   // End Timer
-  endTimer(timerName: string) {
+  endTimer(timerName: TypeTimerNames) {
     const cTimestamp = performance.now();
     const timerObj = Object.values(this.timers[timerName])[0];
     Object.defineProperties(timerObj, {
