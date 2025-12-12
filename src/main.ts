@@ -7,6 +7,8 @@ import type {
   GetLogs,
   Sections,
   GetSections,
+  Timer,
+  EndTimer,
 } from "../types/types.ts";
 
 interface ClassProps<TimerNames, SectionNames> {
@@ -28,6 +30,7 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
     sectionNames,
   }: ClassProps<TimerNames, SectionNames> = {}) {
     this.timerNames = timerNames ?? [];
+
     this.sectionNames = sectionNames ?? [];
     this.sections = Object.fromEntries(
       sectionNames?.map((item) => [item, []]) ?? []
@@ -68,39 +71,39 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
   }
   // Start Timer
   startTimer(timerName: TimerNames): this {
-    Object.defineProperty(this.timers, timerName, {
-      value: {
-        [timerName]: {
-          "Start Timestamp": performance.now(),
-          "End Timestamp": "Timer was not Stopped",
-          Duration: null,
-        },
-      },
-    });
+    this.timers[timerName] = {
+      "Start Timestamp": performance.now(),
+      "End Timestamp": "Timer was not Stopped",
+      Duration: null,
+    };
+
     return this;
   }
 
   // End Timer
-  endTimer(timerName: TimerNames) {
+  endTimer(timerName: TimerNames): EndTimer {
     const cTimestamp = performance.now();
-    const timerObj = Object.values(this.timers[timerName])[0];
+    const timerObj = this.timers[timerName];
+    if (!timerObj) {
+      throw new Error(`Timer [${timerName}] was not started !!!`);
+    }
     timerObj["End Timestamp"] = cTimestamp;
-    timerObj.Duration = +cTimestamp - timerObj["Start Timestamp"];
-    // Object.defineProperties(timerObj, {
-    //   "End Timestamp": {
-    //     value: cTimestamp,
-    //   },
-    //   Duration: {
-    //     value: +(cTimestamp - timerObj["Start Timestamp"]).toPrecision(3),
-    //   },
-    // });
+    timerObj.Duration = +(cTimestamp - timerObj["Start Timestamp"]).toFixed(5);
+    const returnTimer = {
+      timer: timerObj,
+      log: () => console.log(timerObj),
+      table: () => console.table(timerObj),
+    };
+    Object.defineProperties(returnTimer, {
+      log: {
+        enumerable: false,
+      },
+      table: {
+        enumerable: false,
+      },
+    });
+    return returnTimer;
   }
-
-  // Reset Timer
-
-  // resetTimer() {
-  //   this.timer = 0;
-  // }
 
   // Add a Log
   addLog<T>(value: T, label: string): T {
@@ -118,20 +121,6 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
 
     return value;
   }
-
-  // Start a New Section
-  // addSection(sectionName: string) {
-  //   const newSection = { [sectionName]: [] };
-  //   this.logs.push(newSection);
-  //   this.isSection = true;
-  //   return this;
-  // }
-
-  // End The Active Section
-  // endSection() {
-  //   this.isSection = false;
-  //   return this;
-  // }
 
   // Console Logging The Logs
   log(): this {
@@ -155,17 +144,35 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
   }
   // Get Timers
   getTimers(timerName?: TimerNames): GetTimers {
+    // Initialize the Return Object
+    const returnObj = {
+      JSON: undefined as unknown as TimerStack | Timer,
+      stringified: null as unknown as string,
+    };
+
+    // No Timer Name Was Provided -- Return All Timers
     if (!timerName) {
-      return {
-        json: this.timers,
-        stringify: JSON.stringify(this.timers),
-      };
+      // Assign The Values
+      returnObj.JSON = this.timers;
+      returnObj.stringified = JSON.stringify(this.timers);
+
+      // Hide The Stringified Version
+      Object.defineProperty(returnObj, "stringified", {
+        enumerable: false,
+      });
+      return returnObj;
     } else {
-      const timerObj = Object.values(this.timers[timerName])[0];
-      return {
-        json: timerObj,
-        stringify: JSON.stringify(timerObj),
-      };
+      // Timer Name Was Provided
+      const targetTimer = this.timers[timerName]; // Find The Timer Object
+
+      // Assign The Values
+      returnObj.JSON = targetTimer;
+      returnObj.stringified = JSON.stringify(targetTimer);
+      // Hide The Stringified Version
+      Object.defineProperty(returnObj, "stringified", {
+        enumerable: false,
+      });
+      return returnObj;
     }
   }
 
