@@ -14,8 +14,8 @@ export type Stack = {
 
 export type OnError = {
   stack?: Stack;
-  syncError?: ErrorEvent;
-  asyncError?: PromiseRejectionEvent;
+  // syncError?: ErrorEvent;
+  // asyncError?: PromiseRejectionEvent;
 };
 
 export type GetTimers = {
