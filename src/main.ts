@@ -22,14 +22,25 @@ interface ClassProps<TimerNames, SectionNames> {
 }
 
 export class Logger<TimerNames extends string, SectionNames extends string> {
+  /**Array of all log objects Including logs assigned to sections */
   logs: Logs = [];
-  isSection: boolean = false;
+  /**Array of Timer Objects */
   timers: TimerStack = {};
-  timerNames: string[];
-  sectionNames: SectionNames[];
+  /**Array of section objects containing assigned logs */
   sections: Sections<SectionNames>;
+  /**Object holding timers , logs and sections  */
   stack: Stack = { timers: this.timers, logs: this.logs };
+  private timerNames: string[];
+  private sectionNames: SectionNames[];
 
+  /**
+   * Constructor for the Logger class.
+   * @param {ClassProps<TimerNames, SectionNames>} props - Options for the logger.
+   * @param {TimerNames[]} props.timerNames - Timer names to use.
+   * @param {SectionNames[]} props.sectionNames - Section names to use.
+   * @param {(stack: Stack) => void} props.onEnd - Callback to run when the application exits.
+   * @param {(errorEvent: ErrorEvent | PromiseRejectionEvent, stack: Stack) => void} props.onError - Callback to run when an unhandled error occurs.
+   * **/
   constructor({
     timerNames,
     sectionNames,
@@ -61,10 +72,14 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
   }
 
   // Add Log To Section
+
+  /** Add log to target section and return the provided value
+   * ** Note that this also adds the log to the logs stack
+   */
   toSection<T>(value: T, label: string, sectionName: SectionNames): T {
     this.addLog(value, label);
     const output = {
-      [`[ ${label} ]`]: {
+      [label]: {
         value: value,
         TimeStamp: performance.now(),
       },
@@ -75,24 +90,9 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
     return value;
   }
 
-  // Get Sections
-  // getSections(sectionName?: SectionNames): GetSections<SectionNames> {
-  //   if (sectionName) {
-  //     const targetSection = this.sections[sectionName];
-  //     return {
-  //       log: (): void => console.log(targetSection),
-  //       json: () => targetSection,
-  //       stringify: () => JSON.stringify(targetSection),
-  //     };
-  //   } else {
-  //     return {
-  //       log: (): void => console.log(this.sections),
-  //       json: () => this.sections,
-  //       stringify: () => JSON.stringify(this.sections),
-  //     };
-  //   }
-  // }
   // Start Timer
+
+  /** Start target timer */
   startTimer(timerName: TimerNames): this {
     this.timers[timerName] = {
       "Start Timestamp": performance.now(),
@@ -104,6 +104,8 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
   }
 
   // End Timer
+
+  /**End target timer */
   endTimer(timerName: TimerNames) {
     const cTimestamp = performance.now();
     const timerObj = this.timers[timerName];
@@ -112,23 +114,12 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
     }
     timerObj["End Timestamp"] = cTimestamp;
     timerObj.Duration = +(cTimestamp - timerObj["Start Timestamp"]).toFixed(5);
-    // const returnTimer = {
-    //   timer: timerObj,
-    //   log: () => console.log(timerObj),
-    //   table: () => console.table(timerObj),
-    // };
-    // Object.defineProperties(returnTimer, {
-    //   log: {
-    //     enumerable: false,
-    //   },
-    //   table: {
-    //     enumerable: false,
-    //   },
-    // });
+
     return this;
   }
 
   // Add a Log
+  /** Add log to log stack and return the provided value */
   addLog<T>(value: T, label: string): T {
     // Log Object
     const output = {
@@ -144,75 +135,4 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
 
     return value;
   }
-
-  // Console Logging The Logs
-  // log(): this {
-  //   console.log(this.logs);
-  //   return this;
-  // }
-
-  // Console.Table
-  // table(): this {
-  //   console.table(this.logs);
-  //   return this;
-  // }
-
-  // Get Log
-  // getLogs(): GetLogs {
-  //   const output = {
-  //     json: this.logs,
-  //     stringify: JSON.stringify(this.logs),
-  //   };
-  //   return output;
-  // }
-  // Get Timers
-  // getTimers(timerName?: TimerNames): GetTimers {
-  //   // Initialize the Return Object
-  //   const returnObj = {
-  //     JSON: undefined as unknown as TimerStack | Timer,
-  //     stringified: null as unknown as string,
-  //   };
-
-  //   // No Timer Name Was Provided -- Return All Timers
-  //   if (!timerName) {
-  //     // Assign The Values
-  //     returnObj.JSON = this.timers;
-  //     returnObj.stringified = JSON.stringify(this.timers);
-
-  //     // Hide The Stringified Version
-  //     Object.defineProperty(returnObj, "stringified", {
-  //       enumerable: false,
-  //     });
-  //     return returnObj;
-  //   } else {
-  //     // Timer Name Was Provided
-  //     const targetTimer = this.timers[timerName]; // Find The Timer Object
-
-  //     // Assign The Values
-  //     returnObj.JSON = targetTimer;
-  //     returnObj.stringified = JSON.stringify(targetTimer);
-  //     // Hide The Stringified Version
-  //     Object.defineProperty(returnObj, "stringified", {
-  //       enumerable: false,
-  //     });
-  //     return returnObj;
-  //   }
-  // }
-
-  // Get Stack and Logs
-  // getStack(): Stack {
-  //   return this.stack;
-  // }
-  // // Callback on Unhandled Exception
-  // onError(callbackFn: ({ stack, syncError, asyncError }: OnError) => void) {
-  //   // Sync Errors Hnadling
-  //   addEventListener("error", (error) =>
-  //     callbackFn({ stack: this.stack, syncError: error })
-  //   );
-
-  //   // Async Errors Handling
-  //   addEventListener("unhandledrejection", (error) =>
-  //     callbackFn({ stack: this.stack, asyncError: error })
-  //   );
-  // }
 }
