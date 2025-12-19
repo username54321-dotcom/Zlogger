@@ -1,186 +1,179 @@
-# Zlogger
+# @qamareg/zlogger
 
-A simple, lightweight, and zero-dependency logger for Deno/Node.js/Bun environments, written in TypeScript. It provides features for basic logging, performance timing, log sectioning, and global error handling.
+A flexible and lightweight TypeScript logger for Deno, Node.js, and browsers.
+
+`@qamareg/zlogger` provides a simple yet powerful way to log events, measure performance, and handle errors in your TypeScript or JavaScript projects. It's designed to be intuitive and easy to use, with a focus on providing valuable debugging information.
 
 ## Features
 
-- **Zero Dependencies**: Lightweight and easy to integrate.
-- **Typed API**: Full TypeScript support with generics for autocompletion on timer and section names.
-- **Performance Timers**: Easily measure the duration of operations.
-- **Log Sections**: Organize logs into different sections for better clarity.
-- **Error Handling**: Global error listeners to capture unhandled exceptions and promise rejections, providing the log/timer stack at the time of the error.
-- **Flexible Output**: Get logs in JSON format, as a string, or log them directly to the console in different formats.
+- **Timers**: Easily measure the duration of specific operations.
+- **Sections**: Organize your logs into logical groups or sections.
+- **Lifecycle Hooks**: Execute custom logic on application exit (`onEnd`) or when an unhandled error occurs (`onError`).
+- **Type-Safe**: Uses TypeScript generics to provide type safety for timer and section names.
+- **Cross-Platform**: Works in Deno, Node.js, and modern browsers.
 
-## Usage
+## Installation
 
-### Import
+`@qamareg/zlogger` is published on [JSR](https://jsr.io).
 
-Import the `Logger` class from `mod.ts`.
+To use `@qamareg/zlogger` in your Deno project, add it to your `deno.json`:
 
-```typescript
-import { Logger } from "./mod.ts";
-```
-
-### Initialization
-
-Create a new instance of the `Logger`. You can pre-define `timerNames` and `sectionNames` to get TypeScript autocompletion and type safety.
-
-```typescript
-const logger = new Logger({
-  timerNames: ["fileRead", "apiCall"],
-  sectionNames: ["database", "authentication"],
-});
-```
-
-If you don't provide any names, you can still use strings for timers and sections, but you won't get autocompletion.
-
-```typescript
-const logger = new Logger();
-```
-
----
-
-### Basic Logging
-
-Use `addLog` to add entries. It's designed to be used inline, as it returns the value that was passed to it.
-
-```typescript
-import { Logger } from "./mod.ts";
-
-const logger = new Logger();
-
-function double(n: number): number {
-  return logger.addLog(n * 2, "Doubled Number");
+```json
+{
+  "imports": {
+    "@qamareg/zlogger": "jsr:@qamareg/zlogger@^1.5.0"
+  }
 }
-
-const result = double(5); // result is 10
-
-// Log all entries to the console
-logger.log();
-
-// Log all entries as a table
-logger.table();
-
-// Get logs as an object
-const logs = logger.getLogs();
-console.log(logs.json);
-console.log(logs.stringify);
 ```
 
----
+Then, you can import it into your project:
+
+```typescript
+import { Logger } from "@qamareg/zlogger";
+```
+
+For Node.js, you can use `npx`:
+
+```bash
+npx jsr add @qamareg/zlogger
+```
+
+## Basic Usage
+
+Here's a simple example of how to use `@qamareg/zlogger`:
+
+```typescript
+import { Logger } from "@qamareg/zlogger";
+
+const logger = new Logger();
+
+logger.addLog("Initializing application...", "init");
+// ... your code ...
+logger.addLog("Application finished.", "shutdown");
+
+console.log(logger.logs);
+```
+
+## Advanced Usage
 
 ### Timers
 
-Measure the execution time of your code blocks.
+You can use timers to measure the performance of specific parts of your code.
 
 ```typescript
-import { Logger } from "./mod.ts";
+import { Logger } from "@qamareg/zlogger";
 
-const logger = new Logger({ timerNames: ["totalTime", "fileProcessing"] });
+const logger = new Logger({
+  timerNames: ["fetchData", "processData"],
+});
 
-logger.startTimer("totalTime");
-logger.startTimer("fileProcessing");
+logger.startTimer("fetchData");
+const response = await fetch("https://api.example.com/data");
+logger.endTimer("fetchData");
 
-// some file processing logic...
+logger.startTimer("processData");
+const data = await response.json();
+// ... process data ...
+logger.endTimer("processData");
 
-const fileTimer = logger.endTimer("fileProcessing");
-console.log("File processing took:");
-fileTimer.log(); // Logs the timer object to the console
-
-const totalTimer = logger.endTimer("totalTime");
-console.log("Total execution time:");
-totalTimer.table(); // Logs the timer object as a table
-
-// Get all timers
-const allTimers = logger.getTimers();
-console.log(allTimers.JSON);
-
-// Get a specific timer
-const specificTimer = logger.getTimers("fileProcessing");
-console.log(specificTimer.JSON);
+console.log(logger.timers);
 ```
-
----
 
 ### Sections
 
-Organize logs into named sections. This is useful for separating logs from different parts of your application (e.g., API calls, database queries).
+Sections allow you to group related logs together.
 
 ```typescript
-import { Logger } from "./mod.ts";
+import { Logger } from "@qamareg/zlogger";
 
-const logger = new Logger({ sectionNames: ["api", "db"] });
-
-function getUser(id: string) {
-  // ... some logic
-  const user = { id, name: "John Doe" };
-  return logger.toSection(user, "User Fetched", "db");
-}
-
-function callApi() {
-  // ... some logic
-  const response = { status: 200 };
-  return logger.toSection(response, "API Response", "api");
-}
-
-getUser("123");
-callApi();
-
-// Get all sections
-const allSections = logger.getSections();
-console.log(allSections.json());
-
-// Get a specific section
-const dbSection = logger.getSections("db");
-dbSection.log(); // console.log the db section
-```
-
-Note: `toSection` also adds the log to the main log list.
-
----
-
-### Error Handling
-
-Zlogger can listen for global unhandled errors (sync) and unhandled promise rejections (async). When an error occurs, it calls your callback function with the error and the current `stack` (all logs and active timers).
-
-This allows you to log the state of your application right before it crashed.
-
-```typescript
-import { Logger } from "./mod.ts";
-
-const logger = new Logger();
-
-logger.onError(({ stack, syncError, asyncError }) => {
-  console.error("An unhandled error occurred!");
-  if (syncError) {
-    console.error("Type: Synchronous Error", syncError.message);
-  }
-  if (asyncError) {
-    console.error("Type: Asynchronous Error", asyncError.reason);
-  }
-
-  console.log("--- Zlogger Stack at time of error ---");
-  console.log("Logs:", stack?.logs);
-  console.log("Timers:", stack?.timers);
-
-  // You could also send this data to a logging service
+const logger = new Logger({
+  sectionNames: ["userAuth", "dataProcessing"],
 });
 
-logger.addLog("Application starting...", "init");
+logger.toSection("User attempting to log in", "login-attempt", "userAuth");
+// ... authentication logic ...
+logger.toSection("User logged in successfully", "login-success", "userAuth");
 
-// This will trigger the sync error handler
-throw new Error("Something went wrong!");
+logger.toSection("Starting data processing", "start", "dataProcessing");
+// ... data processing logic ...
+logger.toSection("Data processing complete", "end", "dataProcessing");
 
-// This will trigger the async error handler
-// Promise.reject("Something went wrong asynchronously!");
+console.log(logger.sections);
 ```
 
-### Getting the Full Stack
+### Lifecycle Hooks
 
-You can get all logs and timers at any time using `getStack()`.
+`@qamareg/zlogger` provides `onEnd` and `onError` hooks to handle application exit and unhandled errors.
 
 ```typescript
-const stack = logger.getStack();
-console.log(stack.logs);
-console.log(stack.timers);
+import { Logger } from "@qamareg/zlogger";
+
+const logger = new Logger({
+  onEnd: (stack) => {
+    console.log("Application is closing. Final logs:", stack.logs);
+    // You could send this data to a logging service
+  },
+  onError: (errorEvent, stack) => {
+    console.error("An unhandled error occurred:", errorEvent);
+    console.error("State at the time of error:", stack);
+    // You could report this error to a monitoring service
+  },
+});
+
+// ... your application logic ...
+
+// This will trigger the onError hook
+// throw new Error("Something went wrong!");
 ```
+
+## API Reference
+
+### `new Logger<TimerNames, SectionNames>(props)`
+
+Creates a new `Logger` instance.
+
+- `props` (optional): An object with the following properties:
+  - `timerNames`: An array of strings representing the names of the timers you want to use.
+  - `sectionNames`: An array of strings representing the names of the sections you want to use.
+  - `onEnd`: A function that will be called when the application exits. It receives the final `stack` (logs and timers) as an argument.
+  - `onError`: A function that will be called when an unhandled error or promise rejection occurs. It receives the `errorEvent` and the current `stack` as arguments.
+
+### `addLog<T>(value: T, label: string): T`
+
+Adds a log entry to the `logs` array.
+
+### `toSection<T>(value: T, label: string, sectionName: SectionNames): T`
+
+Adds a log entry to a specific section.
+
+### `startTimer(timerName: TimerNames): this`
+
+Starts a timer with the specified name.
+
+### `endTimer(timerName: TimerNames): this`
+
+Stops a timer with the specified name and calculates the duration.
+
+### `logger.logs`
+
+An array containing all the log entries.
+
+### `logger.timers`
+
+An object containing all the timer data.
+
+### `logger.sections`
+
+An object containing all the section data.
+
+### `logger.stack`
+
+An object containing both `logs` and `timers`.
+
+## Contributing
+
+Contributions are welcome! Please feel free to open an issue or submit a pull request.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
