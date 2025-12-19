@@ -106,7 +106,7 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
   // End Timer
 
   /**End target timer */
-  endTimer(timerName: TimerNames) {
+  endTimer(timerName: TimerNames): this {
     const cTimestamp = performance.now();
     const timerObj = this.timers[timerName];
     if (!timerObj) {
