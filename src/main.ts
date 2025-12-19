@@ -33,14 +33,6 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
   private timerNames: string[];
   private sectionNames: SectionNames[];
 
-  /**
-   * Constructor for the Logger class.
-   * @param {ClassProps<TimerNames, SectionNames>} props - Options for the logger.
-   * @param {TimerNames[]} props.timerNames - Timer names to use.
-   * @param {SectionNames[]} props.sectionNames - Section names to use.
-   * @param {(stack: Stack) => void} props.onEnd - Callback to run when the application exits.
-   * @param {(errorEvent: ErrorEvent | PromiseRejectionEvent, stack: Stack) => void} props.onError - Callback to run when an unhandled error occurs.
-   * **/
   constructor({
     timerNames,
     sectionNames,
@@ -63,7 +55,6 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
     if (onError) {
       globalThis.addEventListener("error", (e) => {
         onError(e, this.stack);
-        return true;
       });
       globalThis.addEventListener("unhandledrejection", (e) => {
         onError(e, this.stack);
