@@ -1,15 +1,4 @@
-import type {
-  Logs,
-  TimerStack,
-  Stack,
-  OnError,
-  GetTimers,
-  GetLogs,
-  Sections,
-  GetSections,
-  Timer,
-  EndTimer,
-} from "../types/types.ts";
+import type { Logs, TimerStack, Stack, Sections } from "../types/types.ts";
 
 interface ClassProps<TimerNames, SectionNames> {
   timerNames?: TimerNames[];
@@ -19,6 +8,7 @@ interface ClassProps<TimerNames, SectionNames> {
     errorEvent: ErrorEvent | PromiseRejectionEvent,
     stack: Stack
   ) => void;
+  sendLogsFn?: (stack: Stack) => Promise<void>;
 }
 
 export class Logger<TimerNames extends string, SectionNames extends string> {
@@ -30,6 +20,8 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
   sections: Sections<SectionNames>;
   /**Object holding timers , logs and sections  */
   stack: Stack = { timers: this.timers, logs: this.logs };
+  private sendLogsFn: (stack: Stack) => Promise<void> = async () => {};
+  private kv: Deno.Kv | null = null;
   private timerNames: string[];
   private sectionNames: SectionNames[];
 
@@ -38,6 +30,7 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
     sectionNames,
     onEnd,
     onError,
+    sendLogsFn,
   }: ClassProps<TimerNames, SectionNames> = {}) {
     this.timerNames = timerNames ?? [];
 
@@ -46,6 +39,10 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
       sectionNames?.map((item) => [item, []]) ?? []
     );
 
+    // Set Send Logs Function
+    if (sendLogsFn) {
+      this.sendLogsFn = sendLogsFn;
+    }
     // On Execution End Logic
     if (onEnd) {
       globalThis.addEventListener("unload", () => onEnd(this.stack));
@@ -79,6 +76,19 @@ export class Logger<TimerNames extends string, SectionNames extends string> {
     targetSection.push(output);
 
     return value;
+  }
+
+  // Start Async
+  async startAsync(): Promise<this> {
+    this.kv = await Deno.openKv();
+    this.kv.listenQueue(async () => await this.sendLogsFn(this.stack));
+    return this;
+  }
+
+  // Send Logs
+  /** Trigger Set SendLogs Function */
+  async SendLogs() {
+    await this.kv?.enqueue("");
   }
 
   // Start Timer
