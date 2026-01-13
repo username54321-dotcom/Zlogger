@@ -126,6 +126,66 @@ const logger = new Logger({
 // throw new Error("Something went wrong!");
 ```
 
+### Asynchronous Log Sending
+
+`@qamareg/zlogger` now supports asynchronous log sending, leveraging Deno KV for efficient log dispatch. This allows for non-blocking log processing and custom handling of log data.
+
+You can provide a custom `sendLogsFn` function to the Logger constructor to define how logs are processed and sent. This function will receive an array of `LogEntry` objects, allowing you to implement your own logic for storing, transmitting, or otherwise managing your log data.
+
+```typescript
+import { Logger } from "@qamareg/zlogger";
+
+const logger = new Logger({
+  sendLogsFn: async (logs) => {
+    // Example: Store logs in Deno KV
+    const kv = await Deno.openKv();
+    for (const log of logs) {
+      await kv.set(["logs", crypto.randomUUID()], log);
+    }
+    kv.close();
+    console.log(`Sent ${logs.length} logs to Deno KV.`);
+  },
+});
+
+logger.addLog("This log will be sent asynchronously.");
+logger.addLog("Another log entry.");
+
+// In a real application, you'd ensure logs are flushed before exit,
+// for example, by calling an explicit flush method or waiting for a grace period.
+```
+
+The `sendLogsFn` is particularly useful for integrating with external logging services, databases, or for batch processing logs in the background without impacting your application's main thread.
+
+### Async Operations
+
+For scenarios where you need to send logs to a remote service without blocking the main thread, `@qamareg/zlogger` provides async capabilities using Deno's Key-Value store.
+
+**Note:** This feature is only available in the Deno environment.
+
+```typescript
+import { Logger } from "@qamareg/zlogger";
+
+const logger = new Logger({
+  // This function will be called to send the logs
+  sendLogsFn: async (stack) => {
+    console.log("Sending logs to remote service...");
+    await fetch("https://my-logging-service.com/logs", {
+      method: "POST",
+      body: JSON.stringify(stack),
+    });
+    console.log("Logs sent!");
+  },
+});
+
+// Start the async listener
+await logger.startAsync();
+
+logger.addLog("This is an important log that needs to be sent remotely.");
+
+// Trigger the sendLogsFn
+await logger.SendLogs();
+```
+
 ## API Reference
 
 ### `new Logger<TimerNames, SectionNames>(props)`
@@ -137,6 +197,8 @@ Creates a new `Logger` instance.
   - `sectionNames`: An array of strings representing the names of the sections you want to use.
   - `onEnd`: A function that will be called when the application exits. It receives the final `stack` (logs and timers) as an argument.
   - `onError`: A function that will be called when an unhandled error or promise rejection occurs. It receives the `errorEvent` and the current `stack` as arguments.
+  - `sendLogsFn`: An optional asynchronous function that receives an array of `LogEntry` objects and defines how logs are processed and sent.
+  - `sendLogsFn`: An async function that will be called to send the log stack to a remote destination. It receives the `stack` as an argument. (Deno only)
 
 ### `addLog<T>(value: T, label: string): T`
 
@@ -153,6 +215,14 @@ Starts a timer with the specified name.
 ### `endTimer(timerName: TimerNames): this`
 
 Stops a timer with the specified name and calculates the duration.
+
+### `startAsync(): Promise<this>`
+
+Initializes the Deno KV store and starts a queue listener to process logs asynchronously. (Deno only)
+
+### `SendLogs(): Promise<void>`
+
+Enqueues a job to be processed by the queue listener, which in turn executes the `sendLogsFn`. (Deno only)
 
 ### `logger.logs`
 
